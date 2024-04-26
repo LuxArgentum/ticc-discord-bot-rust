@@ -1,6 +1,7 @@
 use std::u32;
 
 use poise::serenity_prelude as serenity;
+use poise::Modal;
 
 struct Data {}
 
@@ -20,6 +21,35 @@ async fn age(
     Ok(())
 }
 
+#[derive(Debug, Modal)]
+#[name = "Quiet Time Form"]
+struct MyModal {
+    #[name = "Starting Verse"]
+    #[placeholder = "Enter the Book Chapter:Verse here"]
+    #[min_length = 5]
+    #[max_length = 500]
+    first_input: String,
+    #[name = "Ending Verse"]
+    #[placeholder = "Enter the Book Chapter:Verse here"]
+    #[min_length = 5]
+    #[max_length = 500]
+    second_input: String,
+    #[name = "Summary"]
+    #[paragraph]
+    #[min_length = 5]
+    #[max_length = 500]
+    third_input: Option<String>
+}
+
+type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
+
+#[poise::command(slash_command)]
+pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
+    let data = MyModal::execute(ctx).await?;
+    println!("Got data: {:?}", data);
+    Ok(())
+}
+
 #[poise::command(slash_command)]
 async fn get_birthday(
     ctx: Context<'_>,
@@ -27,8 +57,6 @@ async fn get_birthday(
     #[description = "Birth day"] day: u32,
 ) -> Result<(), Error> {
     let user = ctx.author();
-    let month = month;
-    let day = day;
     let response = format!("{}'s birthday is {} {}", user.name, month, day);
     ctx.say(response).await?;
     Ok(())
@@ -60,13 +88,15 @@ async fn main() {
                 match testing {
                     Testing::Testing(guild_id) => {
                         poise::builtins::register_in_guild(
-                            ctx, &framework.options().commands, guild_id,
-                        ).await?;
+                            ctx,
+                            &framework.options().commands,
+                            guild_id,
+                        )
+                        .await?;
                     }
                     Testing::NotTesting => {
-                        poise::builtins::register_globally(
-                            ctx, &framework.options().commands,
-                        ).await?;
+                        poise::builtins::register_globally(ctx, &framework.options().commands)
+                            .await?;
                     }
                 }
                 Ok(Data {})
