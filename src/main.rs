@@ -1,7 +1,8 @@
 use std::u32;
 
-use poise::serenity_prelude as serenity;
 use poise::Modal;
+use poise::serenity_prelude as serenity;
+use poise::serenity_prelude::{CreateEmbed, CreateEmbedAuthor, Mentionable};
 
 struct Data {}
 
@@ -23,30 +24,54 @@ async fn age(
 
 #[derive(Debug, Modal)]
 #[name = "Quiet Time Form"]
-struct MyModal {
+struct QuietTimeModal {
     #[name = "Starting Verse"]
     #[placeholder = "Enter the Book Chapter:Verse here"]
     #[min_length = 5]
-    #[max_length = 500]
+    #[max_length = 15]
     first_input: String,
     #[name = "Ending Verse"]
     #[placeholder = "Enter the Book Chapter:Verse here"]
     #[min_length = 5]
-    #[max_length = 500]
+    #[max_length = 15]
     second_input: String,
     #[name = "Summary"]
     #[paragraph]
+    #[placeholder = "Optional: Enter a short summary"]
     #[min_length = 5]
-    #[max_length = 500]
-    third_input: Option<String>
+    #[max_length = 1000]
+    third_input: Option<String>,
 }
 
 type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
 
 #[poise::command(slash_command)]
 pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
-    let data = MyModal::execute(ctx).await?;
-    println!("Got data: {:?}", data);
+    let data = QuietTimeModal::execute(ctx).await?;
+    let embed: CreateEmbed = match &data {
+        None => { panic!("Embed was None") }
+        Some(data) => {
+            let author = &ctx.author();
+            let mut embed = CreateEmbed::new()
+                .author(CreateEmbedAuthor::new(author.global_name.as_ref().unwrap())
+                    .icon_url(ctx.author().avatar_url().unwrap()))
+                .title(format!("{}'s Quiet Time", ctx.author().global_name.as_ref().unwrap()))
+                .field(
+                    "Verses",
+                    format!("From {} to {}", data.first_input, data.second_input),
+                    false);
+            if let Some(summary) = &data.third_input {
+                embed = embed.field(
+                    "Summary",
+                    summary,
+                    false);
+            }
+            embed
+        }
+    };
+    ctx.send(poise::CreateReply::default().embed(embed)).await?;
+    ctx.reply(format!("Hey {user}! Your quiet time has been shared!",
+                      user = ctx.author().mention())).await?;
     Ok(())
 }
 
@@ -80,7 +105,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), get_birthday()],
+            commands: vec![age(), get_birthday(), quiet_time()],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
@@ -92,7 +117,7 @@ async fn main() {
                             &framework.options().commands,
                             guild_id,
                         )
-                        .await?;
+                            .await?;
                     }
                     Testing::NotTesting => {
                         poise::builtins::register_globally(ctx, &framework.options().commands)
