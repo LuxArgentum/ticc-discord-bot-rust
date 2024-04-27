@@ -11,6 +11,18 @@ struct Data {}
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
+#[poise::command(
+slash_command,
+default_member_permissions = "MANAGE_MESSAGES",
+)]
+async fn announcement(
+    ctx: Context<'_>,
+    #[description = "Make an announcement"] description: Option<String>,
+) -> Result<(), Error> {
+    ctx.say(description.unwrap().as_str()).await?;
+    Ok(())
+}
+
 /// Displays your or another user's account creation date
 #[poise::command(slash_command)]
 async fn age(
@@ -81,7 +93,7 @@ pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
 }
 
 #[poise::command(slash_command)]
-async fn get_birthday(
+async fn enter_birthday(
     ctx: Context<'_>,
     #[description = "Birth month"] month: String,
     #[description = "Birth day"] day: u32,
@@ -123,7 +135,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), get_birthday(), quiet_time(), register()],
+            commands: vec![age(), enter_birthday(), quiet_time(), register(), announcement()],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
