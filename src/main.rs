@@ -4,6 +4,7 @@ use poise::Modal;
 use poise::serenity_prelude as serenity;
 use poise::serenity_prelude::{CreateEmbed, CreateEmbedAuthor, Mentionable};
 
+#[derive(Debug)]
 struct Data {}
 
 // User data, which is stored and accessible in all command invocations
@@ -45,7 +46,11 @@ struct QuietTimeModal {
 
 type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
 
-#[poise::command(slash_command)]
+/// TODO: Make Help Text
+#[poise::command(
+slash_command,
+on_error = "error_handler",
+)]
 pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = QuietTimeModal::execute(ctx).await?;
     let embed: CreateEmbed = match &data {
@@ -87,6 +92,19 @@ async fn get_birthday(
     Ok(())
 }
 
+#[poise::command(
+slash_command,
+owners_only,
+)]
+pub async fn register(ctx: Context<'_>) -> Result<(), Error> {
+    poise::builtins::register_application_commands_buttons(ctx).await?;
+    Ok(())
+}
+
+async fn error_handler(error: poise::FrameworkError<'_, Data, Error>) {
+    println!("Oh noes, we got an error: {:?}", error);
+}
+
 #[tokio::main]
 async fn main() {
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
@@ -105,7 +123,7 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), get_birthday(), quiet_time()],
+            commands: vec![age(), get_birthday(), quiet_time(), register()],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
@@ -119,10 +137,7 @@ async fn main() {
                         )
                             .await?;
                     }
-                    Testing::NotTesting => {
-                        poise::builtins::register_globally(ctx, &framework.options().commands)
-                            .await?;
-                    }
+                    Testing::NotTesting => {}
                 }
                 Ok(Data {})
             })
