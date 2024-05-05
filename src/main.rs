@@ -1,11 +1,11 @@
 use std::u32;
 
+use poise::Modal;
 use poise::serenity_prelude as serenity;
-use poise::serenity_prelude::colours::roles::GOLD;
 use poise::serenity_prelude::{
     ChannelId, CreateEmbed, CreateEmbedAuthor, CreateMessage, Mentionable,
 };
-use poise::Modal;
+use poise::serenity_prelude::colours::roles::GOLD;
 
 #[derive(Debug)]
 struct Data {}
@@ -19,6 +19,7 @@ async fn announcement(
     ctx: Context<'_>,
     #[description = "Make an announcement"] description: Option<String>,
 ) -> Result<(), Error> {
+    // TODO: Make description required
     ctx.say(description.unwrap().as_str()).await?;
     Ok(())
 }
@@ -127,6 +128,11 @@ enum Testing {
 
 #[tokio::main]
 async fn main() {
+    run_server().await;
+}
+
+async fn run_server() {
+
     dotenv::dotenv().ok();
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
 
@@ -160,7 +166,7 @@ async fn main() {
                             &framework.options().commands,
                             guild_id,
                         )
-                        .await?;
+                            .await?;
                     }
                     Testing::NotTesting => {}
                 }

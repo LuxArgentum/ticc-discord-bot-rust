@@ -14,7 +14,5 @@ services:
       target: final
     env_file: .env    # Development
     environment:    # Deployment on Server
-      - DISCORD_TOKEN=${DISCORD_TOKEN}
-      - QUIET_TIME_CHANNEL_ID=${QUIET_TIME_CHANNEL_ID}
-    ports:
-      - 80:80
+      - PORT
+    platform: linux/amd64
