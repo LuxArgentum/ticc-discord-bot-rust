@@ -1,9 +1,11 @@
 use std::u32;
 
-use poise::Modal;
 use poise::serenity_prelude as serenity;
-use poise::serenity_prelude::{ChannelId, CreateEmbed, CreateEmbedAuthor, CreateMessage, Mentionable};
 use poise::serenity_prelude::colours::roles::GOLD;
+use poise::serenity_prelude::{
+    ChannelId, CreateEmbed, CreateEmbedAuthor, CreateMessage, Mentionable,
+};
+use poise::Modal;
 
 #[derive(Debug)]
 struct Data {}
@@ -12,10 +14,7 @@ struct Data {}
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
-#[poise::command(
-slash_command,
-default_member_permissions = "MANAGE_MESSAGES",
-)]
+#[poise::command(slash_command, default_member_permissions = "MANAGE_MESSAGES")]
 async fn announcement(
     ctx: Context<'_>,
     #[description = "Make an announcement"] description: Option<String>,
@@ -60,14 +59,13 @@ struct QuietTimeModal {
 type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
 
 /// TODO: Make Help Text
-#[poise::command(
-slash_command,
-on_error = "error_handler",
-)]
+#[poise::command(slash_command, on_error = "error_handler")]
 pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
     let data = QuietTimeModal::execute(ctx).await?;
     let embed: CreateEmbed = match &data {
-        None => { panic!("Embed was None") }
+        None => {
+            panic!("Embed was None")
+        }
         Some(data) => {
             let author = &ctx.author();
             let mut embed = CreateEmbed::new()
@@ -81,21 +79,22 @@ pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                     format!("From **{}** to **{}**", data.start_verse, data.end_verse),
                     false);
             if let Some(summary) = &data.summary {
-                embed = embed.field(
-                    "Summary",
-                    summary,
-                    false);
+                embed = embed.field("Summary", summary, false);
             }
             embed
         }
     };
-    let quiet_time_channel_id = std::env::var("QUIET_TIME_CHANNEL_ID")
-        .expect("missing QUIET_TIME_CHANNEL_ID");
+    let quiet_time_channel_id =
+        std::env::var("QUIET_TIME_CHANNEL_ID").expect("missing QUIET_TIME_CHANNEL_ID");
     let quiet_time_channel = ChannelId::new(quiet_time_channel_id.parse::<u64>().unwrap());
-    quiet_time_channel.send_message(ctx, CreateMessage::new()
-        .embed(embed)).await?;
-    ctx.reply(format!("Hey {user}! Your quiet time has been shared!",
-                      user = ctx.author().mention())).await?;
+    quiet_time_channel
+        .send_message(ctx, CreateMessage::new().embed(embed))
+        .await?;
+    ctx.reply(format!(
+        "Hey {user}! Your quiet time has been shared!",
+        user = ctx.author().mention()
+    ))
+    .await?;
     Ok(())
 }
 
@@ -111,10 +110,7 @@ async fn enter_birthday(
     Ok(())
 }
 
-#[poise::command(
-slash_command,
-owners_only,
-)]
+#[poise::command(slash_command, owners_only)]
 pub async fn register(ctx: Context<'_>) -> Result<(), Error> {
     poise::builtins::register_application_commands_buttons(ctx).await?;
     Ok(())
@@ -133,7 +129,7 @@ enum Testing {
 async fn main() {
     dotenv::dotenv().ok();
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
-    
+
     let testing = match std::env::var("GUILD_ID") {
         Ok(id) => {
             let id: u64 = id.parse().expect("not a 64-bit unsigned integer");
@@ -141,11 +137,18 @@ async fn main() {
         }
         Err(_) => Testing::NotTesting,
     };
+
     let intents = serenity::GatewayIntents::non_privileged();
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), enter_birthday(), quiet_time(), register(), announcement()],
+            commands: vec![
+                age(),
+                enter_birthday(),
+                quiet_time(),
+                register(),
+                announcement(),
+            ],
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {
@@ -157,7 +160,7 @@ async fn main() {
                             &framework.options().commands,
                             guild_id,
                         )
-                            .await?;
+                        .await?;
                     }
                     Testing::NotTesting => {}
                 }
