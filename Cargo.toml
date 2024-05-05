@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 tokio = { version = "1.37.0", features = ["full"] }
 poise = "0.6.1"
+dotenv = "0.15.0"

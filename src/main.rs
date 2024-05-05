@@ -86,7 +86,11 @@ pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
             embed
         }
     };
-    ctx.send(poise::CreateReply::default().embed(embed)).await?;
+    let quiet_time_channel_id = std::env::var("QUIET_TIME_CHANNEL_ID")
+        .expect("missing QUIET_TIME_CHANNEL_ID");
+    let quiet_time_channel = ChannelId::new(quiet_time_channel_id.parse::<u64>().unwrap());
+    quiet_time_channel.send_message(ctx, CreateMessage::new()
+        .embed(embed)).await?;
     ctx.reply(format!("Hey {user}! Your quiet time has been shared!",
                       user = ctx.author().mention())).await?;
     Ok(())
@@ -119,6 +123,7 @@ async fn error_handler(error: poise::FrameworkError<'_, Data, Error>) {
 
 #[tokio::main]
 async fn main() {
+    dotenv::dotenv().ok();
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
     enum Testing {
         Testing(serenity::GuildId),
