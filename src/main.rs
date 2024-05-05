@@ -2,7 +2,8 @@ use std::u32;
 
 use poise::Modal;
 use poise::serenity_prelude as serenity;
-use poise::serenity_prelude::{CreateEmbed, CreateEmbedAuthor, Mentionable};
+use poise::serenity_prelude::{ChannelId, CreateEmbed, CreateEmbedAuthor, CreateMessage, Mentionable};
+use poise::serenity_prelude::colours::roles::GOLD;
 
 #[derive(Debug)]
 struct Data {}
@@ -42,18 +43,18 @@ struct QuietTimeModal {
     #[placeholder = "Enter the Book Chapter:Verse here"]
     #[min_length = 5]
     #[max_length = 15]
-    first_input: String,
+    start_verse: String,
     #[name = "Ending Verse"]
     #[placeholder = "Enter the Book Chapter:Verse here"]
     #[min_length = 5]
     #[max_length = 15]
-    second_input: String,
+    end_verse: String,
     #[name = "Summary"]
     #[paragraph]
     #[placeholder = "Optional: Enter a short summary"]
     #[min_length = 5]
-    #[max_length = 1000]
-    third_input: Option<String>,
+    #[max_length = 1024]
+    summary: Option<String>,
 }
 
 type ApplicationContext<'a> = poise::ApplicationContext<'a, Data, Error>;
@@ -73,11 +74,13 @@ pub async fn quiet_time(ctx: ApplicationContext<'_>) -> Result<(), Error> {
                 .author(CreateEmbedAuthor::new(author.global_name.as_ref().unwrap())
                     .icon_url(ctx.author().avatar_url().unwrap()))
                 .title(format!("{}'s Quiet Time", ctx.author().global_name.as_ref().unwrap()))
+                .color(GOLD)
+                .thumbnail("https://cdn.dribbble.com/users/113758/screenshots/4257859/media/47f55de9a2ddd003143b2dc792a12f1e.jpg?resize=400x300&vertical=center")
                 .field(
                     "Verses",
-                    format!("From {} to {}", data.first_input, data.second_input),
+                    format!("From **{}** to **{}**", data.start_verse, data.end_verse),
                     false);
-            if let Some(summary) = &data.third_input {
+            if let Some(summary) = &data.summary {
                 embed = embed.field(
                     "Summary",
                     summary,
@@ -118,17 +121,19 @@ pub async fn register(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 async fn error_handler(error: poise::FrameworkError<'_, Data, Error>) {
-    println!("Oh noes, we got an error: {:?}", error);
+    println!("Oh noes, we got an error: {error:?}");
+}
+
+enum Testing {
+    Testing(serenity::GuildId),
+    NotTesting,
 }
 
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
-    enum Testing {
-        Testing(serenity::GuildId),
-        NotTesting,
-    }
+    
     let testing = match std::env::var("GUILD_ID") {
         Ok(id) => {
             let id: u64 = id.parse().expect("not a 64-bit unsigned integer");
