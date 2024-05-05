@@ -12,10 +12,9 @@ services:
     build:
       context: .
       target: final
-      secrets:
-        - my_secret
+    env_file: .env    # Development
+    environment:    # Deployment on Server
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - QUIET_TIME_CHANNEL_ID=${QUIET_TIME_CHANNEL_ID}
     ports:
       - 80:80
-secrets:
-  my_secret:
-    file: ./my_secrets.txt
